@@ -127,6 +127,22 @@ export function LivroFicha({ livroId, open, onOpenChange }: LivroFichaProps) {
                     <p className="text-xs text-gray-500 font-medium">CUTTER</p>
                     <p className="text-base font-bold text-gray-900">{livro.cutter || '—'}</p>
                   </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Aquisição</p>
+                    <p className="text-base font-bold text-gray-900">{livro.data_aquisicao || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Volume</p>
+                    <p className="text-base font-bold text-gray-900">{livro.volume || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Série</p>
+                    <p className="text-base font-bold text-gray-900">{livro.serie || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Escola</p>
+                    <p className="text-base font-bold text-gray-900">{livro.escola || '—'}</p>
+                  </div>
                   <div className="col-span-2">
                     <p className="text-xs text-gray-500 font-medium">Descrição</p>
                     <p className="text-base font-semibold text-gray-900">

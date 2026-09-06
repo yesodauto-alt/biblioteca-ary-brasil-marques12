@@ -50,6 +50,10 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
     cdd: '',
     descricao: '',
     cutter: '',
+    data_aquisicao: '',
+    volume: '',
+    serie: '',
+    escola: '',
     status: 'disponível',
   })
 
@@ -66,6 +70,10 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
           cdd: livro.cdd || '',
           descricao: livro.descricao || '',
           cutter: livro.cutter || '',
+          data_aquisicao: livro.data_aquisicao || '',
+          volume: livro.volume || '',
+          serie: livro.serie || '',
+          escola: livro.escola || '',
           status: livro.status,
         })
       } else {
@@ -79,6 +87,10 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
           cdd: '',
           descricao: '',
           cutter: '',
+          data_aquisicao: '',
+          volume: '',
+          serie: '',
+          escola: '',
           status: 'disponível',
         })
       }
@@ -108,6 +120,10 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
       if (form.cdd?.trim()) data.cdd = form.cdd.trim()
       if (form.descricao?.trim()) data.descricao = form.descricao.trim()
       if (form.cutter?.trim()) data.cutter = form.cutter.trim()
+      if (form.data_aquisicao) data.data_aquisicao = form.data_aquisicao
+      if (form.volume?.trim()) data.volume = form.volume.trim()
+      if (form.serie?.trim()) data.serie = form.serie.trim()
+      if (form.escola?.trim()) data.escola = form.escola.trim()
 
       if (livro) {
         await updateLivro(livro.id, data)
@@ -248,6 +264,27 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
               {fieldErrors.cutter && (
                 <p className="text-sm text-red-500 font-medium">{fieldErrors.cutter}</p>
               )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="data_aquisicao" className="text-base font-semibold">Aquisição</Label>
+              <Input id="data_aquisicao" type="date" value={form.data_aquisicao} onChange={(e) => handleFieldChange('data_aquisicao', e.target.value)} className="h-12 text-base" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="volume" className="text-base font-semibold">Volume</Label>
+              <Input id="volume" value={form.volume} onChange={(e) => handleFieldChange('volume', e.target.value)} className="h-12 text-base" placeholder="Ex: 1" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="serie" className="text-base font-semibold">Série</Label>
+              <Input id="serie" value={form.serie} onChange={(e) => handleFieldChange('serie', e.target.value)} className="h-12 text-base" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="escola" className="text-base font-semibold">Escola</Label>
+              <Input id="escola" value={form.escola} onChange={(e) => handleFieldChange('escola', e.target.value)} className="h-12 text-base" />
             </div>
           </div>
 

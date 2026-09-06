@@ -18,6 +18,7 @@ import Relatorios from '@/pages/Relatorios'
 import Configuracoes from '@/pages/Configuracoes'
 import Cursos from '@/pages/Cursos'
 import Importacao from '@/pages/Importacao'
+import ConciliacaoAcervo from '@/pages/ConciliacaoAcervo'
 import NotFound from '@/pages/NotFound'
 
 const App = () => (
@@ -50,6 +51,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="administrador">
                   <Configuracoes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/conciliacao-acervo"
+              element={
+                <ProtectedRoute requiredRole="administrador">
+                  <ConciliacaoAcervo />
                 </ProtectedRoute>
               }
             />

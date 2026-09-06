@@ -13,6 +13,10 @@ export interface Livro {
   cdd: string
   descricao: string
   cutter: string
+  data_aquisicao: string | null
+  volume: string
+  serie: string
+  escola: string
   status: LivroStatus
   created: string
   updated: string
@@ -29,6 +33,10 @@ export interface LivroFormData {
   cdd?: string
   descricao?: string
   cutter?: string
+  data_aquisicao?: string
+  volume?: string
+  serie?: string
+  escola?: string
 }
 
 export const STATUS_LABELS: Record<LivroStatus, string> = {

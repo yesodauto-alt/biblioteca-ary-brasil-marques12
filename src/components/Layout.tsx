@@ -15,6 +15,7 @@ import {
   GraduationCap,
   Settings,
   Upload,
+  FileCheck2,
   LogOut,
   Menu,
 } from 'lucide-react'
@@ -41,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
 const ADMIN_ITEMS: NavItem[] = [
   { to: '/configuracoes', label: 'Configurações', icon: Settings },
   { to: '/importacao', label: 'Importação', icon: Upload },
+  { to: '/conciliacao-acervo', label: 'Conciliação do acervo', icon: FileCheck2 },
 ]
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
