@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { BookPlus, Search, BookOpen, Library } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LivroForm } from '@/components/acervo/LivroForm'
@@ -15,6 +16,7 @@ export default function Acervo() {
   const [livros, setLivros] = useState<Livro[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [sortField, setSortField] = useState<'numero_cadastro' | 'titulo' | 'autor' | 'cdd' | 'cutter'>('titulo')
   const [formOpen, setFormOpen] = useState(false)
   const [fichaId, setFichaId] = useState<string | null>(null)
   const [fichaOpen, setFichaOpen] = useState(false)
@@ -42,7 +44,7 @@ export default function Acervo() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return livros.filter((l) => {
+    const results = livros.filter((l) => {
       if (statusFilter && l.status !== statusFilter) return false
       if (!q) return true
       return (
@@ -55,7 +57,17 @@ export default function Acervo() {
         (l.cutter || '').toLowerCase().includes(q)
       )
     })
-  }, [livros, search, statusFilter])
+
+    return [...results].sort((a, b) => {
+      if (sortField === 'numero_cadastro') {
+        return a.numero_cadastro.localeCompare(b.numero_cadastro, 'pt-BR', { numeric: true })
+      }
+      return (a[sortField] || '').localeCompare(b[sortField] || '', 'pt-BR', {
+        numeric: true,
+        sensitivity: 'base',
+      })
+    })
+  }, [livros, search, sortField, statusFilter])
 
   const handleRowClick = (id: string) => {
     setFichaId(id)
@@ -88,15 +100,28 @@ export default function Acervo() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por número, título, autor, editora, COD, descrição ou CUTTER..."
-          className="h-12 pl-12 text-base border-gray-200"
-        />
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por número, título, autor, editora, COD, descrição ou CUTTER..."
+            className="h-12 pl-12 text-base border-gray-200"
+          />
+        </div>
+        <Select value={sortField} onValueChange={(value) => setSortField(value as typeof sortField)}>
+          <SelectTrigger className="h-12 w-full sm:w-52 text-base">
+            <SelectValue placeholder="Ordenar por" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="numero_cadastro">Número</SelectItem>
+            <SelectItem value="titulo">Título</SelectItem>
+            <SelectItem value="autor">Autor</SelectItem>
+            <SelectItem value="cdd">CDD</SelectItem>
+            <SelectItem value="cutter">Cutter</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* List */}

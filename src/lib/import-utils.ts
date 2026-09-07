@@ -23,11 +23,11 @@ export const IMPORT_CONFIGS: Record<string, ImportConfig> = {
       { name: 'email', label: 'E-mail', required: false, type: 'email' },
       { name: 'data_nascimento', label: 'Data de Nascimento', required: false, type: 'date' },
       { name: 'endereco', label: 'Endereço', required: false, type: 'text' },
-      { name: 'data_cadastro', label: 'Data de Cadastro', required: true, type: 'date' },
+      { name: 'data_cadastro', label: 'Data de Cadastro', required: false, type: 'date' },
       {
         name: 'status',
         label: 'Status',
-        required: true,
+        required: false,
         type: 'select',
         options: ['ativo', 'inativo'],
       },
@@ -41,7 +41,8 @@ export const IMPORT_CONFIGS: Record<string, ImportConfig> = {
       { name: 'numero_cadastro', label: 'Número de Cadastro', required: true, type: 'text' },
       { name: 'titulo', label: 'Título', required: true, type: 'text' },
       { name: 'autor', label: 'Autor', required: true, type: 'text' },
-      { name: 'editora', label: 'Editora', required: true, type: 'text' },
+      { name: 'coautor', label: 'Coautor', required: false, type: 'text' },
+      { name: 'editora', label: 'Editora', required: false, type: 'text' },
       { name: 'categoria', label: 'Categoria', required: false, type: 'text' },
       { name: 'cdd', label: 'CDD', required: false, type: 'text' },
       { name: 'descricao', label: 'Descrição', required: false, type: 'text' },
@@ -49,7 +50,7 @@ export const IMPORT_CONFIGS: Record<string, ImportConfig> = {
       {
         name: 'status',
         label: 'Status',
-        required: true,
+        required: false,
         type: 'select',
         options: ['disponível', 'emprestado', 'manutenção', 'extraviado', 'baixado'],
       },
@@ -78,20 +79,22 @@ export function autoMapColumns(headers: string[], importType: string): Record<st
   if (!config) return {}
   const mapping: Record<string, string> = {}
   for (const header of headers) {
-    const normalized = header.toLowerCase().trim()
-    for (const field of config.fields) {
+    const normalized = header.toLowerCase().replace(/^\uFEFF/, '').trim()
+    const exactMatch = config.fields.find((field) => {
       const fieldLabel = field.label.toLowerCase().replace(/\s+/g, '_')
       const fieldName = field.name.toLowerCase()
-      if (
-        normalized === fieldName ||
-        normalized === fieldLabel ||
-        normalized.includes(fieldName) ||
-        normalized.includes(fieldLabel)
-      ) {
-        mapping[header] = field.name
-        break
-      }
+      return normalized === fieldName || normalized === fieldLabel
+    })
+    if (exactMatch) {
+      mapping[header] = exactMatch.name
+      continue
     }
+    const partialMatch = config.fields.find((field) => {
+      const fieldLabel = field.label.toLowerCase().replace(/\s+/g, '_')
+      const fieldName = field.name.toLowerCase()
+      return normalized.includes(fieldName) || normalized.includes(fieldLabel)
+    })
+    if (partialMatch) mapping[header] = partialMatch.name
   }
   return mapping
 }

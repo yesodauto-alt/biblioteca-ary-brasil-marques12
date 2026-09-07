@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { useRealtime } from '@/hooks/use-realtime'
 import {
-  getActiveEmprestimoByLivroCadastro,
+  searchActiveEmprestimos,
   devolverEmprestimo,
   renovarEmprestimo,
   type EmprestimoWithLeitor,
@@ -44,6 +44,7 @@ function getLoanSituation(dataPrevista: string): { label: string; isLate: boolea
 export default function Devolucao() {
   const [bookSearch, setBookSearch] = useState('')
   const [emprestimo, setEmprestimo] = useState<EmprestimoWithLeitor | null>(null)
+  const [matches, setMatches] = useState<EmprestimoWithLeitor[]>([])
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -83,14 +84,24 @@ export default function Devolucao() {
     const num = bookSearch.trim()
     if (!num) return
     setEmprestimo(null)
+    setMatches([])
     setError(null)
     setSuccess(null)
     try {
-      const emp = await getActiveEmprestimoByLivroCadastro(num)
-      setEmprestimo(emp)
-      setTimeout(() => confirmRef.current?.focus(), 50)
+      const results = await searchActiveEmprestimos(num)
+      if (results.length === 0) {
+        setError('Nenhum empréstimo ativo encontrado para esta busca.')
+        inputRef.current?.focus()
+        return
+      }
+      if (results.length === 1) {
+        setEmprestimo(results[0])
+        setTimeout(() => confirmRef.current?.focus(), 50)
+        return
+      }
+      setMatches(results)
     } catch {
-      setError('Nenhum empréstimo ativo encontrado para este livro.')
+      setError('Não foi possível realizar a busca. Tente novamente.')
       inputRef.current?.focus()
     }
   }
@@ -186,7 +197,7 @@ export default function Devolucao() {
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
         <div className="space-y-2">
-          <label className="text-lg font-bold text-gray-800">Número do livro</label>
+          <label className="text-lg font-bold text-gray-800">Livro ou leitor</label>
           <Input
             ref={inputRef}
             value={bookSearch}
@@ -197,7 +208,7 @@ export default function Devolucao() {
                 handleBookLookup()
               }
             }}
-            placeholder="Digite o número e pressione ENTER..."
+            placeholder="Número, título do livro ou nome do leitor..."
             className="h-12 text-base font-medium border-gray-200"
             autoFocus
           />
@@ -208,6 +219,29 @@ export default function Devolucao() {
             </div>
           )}
         </div>
+
+        {matches.length > 1 && !emprestimo && (
+          <div className="space-y-2">
+            <p className="font-semibold text-gray-700">Selecione o empréstimo para devolver:</p>
+            {matches.map((match) => (
+              <button
+                key={match.id}
+                type="button"
+                onClick={() => {
+                  setEmprestimo(match)
+                  setMatches([])
+                  setTimeout(() => confirmRef.current?.focus(), 50)
+                }}
+                className="w-full rounded-lg border border-gray-200 p-3 text-left hover:border-[#1F5C8B] hover:bg-[#1F5C8B]/5"
+              >
+                <p className="font-bold text-gray-900">{match.expand?.livro?.titulo || 'Livro não encontrado'}</p>
+                <p className="text-sm text-gray-600">
+                  Livro Nº {match.expand?.livro?.numero_cadastro || '—'} · Leitor: {match.expand?.leitor?.nome_completo || '—'}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
 
         {emprestimo && (
           <div className="space-y-4 animate-fade-in">

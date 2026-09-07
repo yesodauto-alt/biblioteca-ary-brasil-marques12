@@ -144,6 +144,32 @@ export const getActiveEmprestimoByLivroCadastro = async (
     )
 }
 
+export const searchActiveEmprestimos = async (
+  query: string,
+): Promise<EmprestimoWithLeitor[]> => {
+  const normalized = query.trim().toLocaleLowerCase()
+  if (!normalized) return []
+
+  const emprestimos = await getActiveEmprestimos()
+  return emprestimos
+    .filter((emprestimo) => {
+      const livro = emprestimo.expand?.livro
+      const leitor = emprestimo.expand?.leitor
+      return [
+        livro?.numero_cadastro,
+        livro?.titulo,
+        livro?.autor,
+        leitor?.numero_cadastro,
+        leitor?.nome_completo,
+      ].some((value) => value?.toLocaleLowerCase().includes(normalized))
+    })
+    .sort((a, b) => {
+      const aExact = a.expand?.livro?.numero_cadastro === query.trim() ? 0 : 1
+      const bExact = b.expand?.livro?.numero_cadastro === query.trim() ? 0 : 1
+      return aExact - bExact
+    })
+}
+
 export const getDevolucoesHoje = async (): Promise<EmprestimoWithLeitor[]> => {
   const today = new Date().toISOString().split('T')[0]
   return await pb.collection('emprestimos').getFullList<EmprestimoWithLeitor>({

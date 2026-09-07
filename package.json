@@ -1,6 +1,6 @@
 {
-  "name": "skip-react-template",
-  "description": "A frontend React Vite TypeScript Shadcn UI template for Skip projects",
+  "name": "biblioteca-ary-brasil-marques",
+  "description": "Sistema de gestão da Biblioteca Ary Brasil Marques",
   "private": true,
   "version": "0.0.64",
   "type": "module",

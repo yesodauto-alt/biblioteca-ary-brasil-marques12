@@ -9,7 +9,6 @@ import { LeitorSearch } from '@/components/usuarios/LeitorSearch'
 import { VolunteerSelect } from '@/components/volunteers/VolunteerSelect'
 import {
   searchLivrosForLoan,
-  updateLivroStatus,
   STATUS_LABELS,
   STATUS_BADGE_CLASSES,
   type Livro,
@@ -124,7 +123,6 @@ export function EmprestimoForm({
         responsavel_voluntario: selectedVoluntario,
         tipo_emprestimo: tipo,
       })
-      await updateLivroStatus(foundLivro.id, 'emprestado')
       toast.success('Empréstimo registrado com sucesso!', {
         description: `A ENTREGA SERÁ DIA ${formatDate(created.data_prevista_devolucao)}`,
       })
@@ -132,7 +130,11 @@ export function EmprestimoForm({
       onOpenChange(false)
     } catch (error) {
       console.error('EmprestimoForm submit error:', error)
-      toast.error('Não foi possível concluir a operação. Verifique os dados e tente novamente.')
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Não foi possível concluir a operação. Verifique os dados e tente novamente.'
+      toast.error(message)
     } finally {
       setSubmitting(false)
     }

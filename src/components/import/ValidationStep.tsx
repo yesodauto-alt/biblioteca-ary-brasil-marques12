@@ -16,6 +16,7 @@ interface ValidationStepProps {
   validation: ValidationResult | null
   validating: boolean
   importing: boolean
+  progress: { processed: number; total: number; imported: number; failed: number }
   onBack: () => void
   onConfirm: () => void
 }
@@ -25,6 +26,7 @@ export function ValidationStep({
   validation,
   validating,
   importing,
+  progress,
   onBack,
   onConfirm,
 }: ValidationStepProps) {
@@ -51,6 +53,7 @@ export function ValidationStep({
 
   if (!validation) return null
   const { valid, problems } = validation
+  const percentage = progress.total > 0 ? Math.round((progress.processed / progress.total) * 100) : 0
 
   return (
     <div className="space-y-6">
@@ -77,6 +80,33 @@ export function ValidationStep({
           </div>
         </div>
       </div>
+
+      {importing && (
+        <div
+          className="rounded-xl border border-blue-200 bg-blue-50 p-5 space-y-3"
+          aria-live="polite"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="font-bold text-blue-900">Importação em andamento</p>
+              <p className="text-sm text-blue-700">Aguarde nesta tela até a conclusão.</p>
+            </div>
+            <p className="text-lg font-bold text-blue-900">
+              {progress.processed} de {progress.total} ({percentage}%)
+            </p>
+          </div>
+          <div className="h-3 w-full overflow-hidden rounded-full bg-blue-100">
+            <div
+              className="h-full rounded-full bg-[#1F5C8B] transition-all duration-300"
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
+          <p className="text-sm font-medium text-blue-800">
+            {progress.imported} importado(s)
+            {progress.failed > 0 ? ` · ${progress.failed} com falha` : ''}
+          </p>
+        </div>
+      )}
 
       {problems.length > 0 && (
         <div className="space-y-3">
@@ -159,7 +189,7 @@ export function ValidationStep({
         >
           {importing ? (
             <>
-              <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Importando...
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Importando {progress.processed} de {progress.total}
             </>
           ) : (
             <>Confirmar importação ({valid.length})</>

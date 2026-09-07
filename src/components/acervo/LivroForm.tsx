@@ -101,13 +101,13 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
         titulo: form.titulo.trim(),
         autor: form.autor.trim(),
         editora: form.editora.trim(),
+        categoria: form.categoria.trim(),
+        cdd: form.cdd.trim(),
+        cutter: form.cutter.trim(),
         status: form.status || 'disponível',
       }
-      if (form.categoria?.trim()) data.categoria = form.categoria.trim()
       if (form.observacoes?.trim()) data.observacoes = form.observacoes.trim()
-      if (form.cdd?.trim()) data.cdd = form.cdd.trim()
       if (form.descricao?.trim()) data.descricao = form.descricao.trim()
-      if (form.cutter?.trim()) data.cutter = form.cutter.trim()
 
       if (livro) {
         await updateLivro(livro.id, data)
@@ -139,16 +139,21 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="numero_cadastro" className="text-base font-semibold">
-              Número de Cadastro *
+              Número de Cadastro
             </Label>
-            <Input
-              id="numero_cadastro"
-              value={form.numero_cadastro}
-              onChange={(e) => handleFieldChange('numero_cadastro', e.target.value)}
-              className="h-12 text-base"
-              placeholder="Ex: 0001"
-              required
-            />
+            {livro ? (
+              <Input
+                id="numero_cadastro"
+                value={form.numero_cadastro}
+                onChange={(e) => handleFieldChange('numero_cadastro', e.target.value)}
+                className="h-12 text-base"
+                required
+              />
+            ) : (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-base font-semibold text-gray-700">
+                Gerado automaticamente ao concluir o cadastro
+              </div>
+            )}
             {fieldErrors.numero_cadastro && (
               <p className="text-sm text-red-500 font-medium">{fieldErrors.numero_cadastro}</p>
             )}
@@ -207,7 +212,7 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
 
           <div className="space-y-2">
             <Label htmlFor="categoria" className="text-base font-semibold">
-              Categoria (opcional)
+              Categoria *
             </Label>
             <Input
               id="categoria"
@@ -215,13 +220,14 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
               onChange={(e) => handleFieldChange('categoria', e.target.value)}
               className="h-12 text-base"
               placeholder="Ex: Romance, Espiritismo, Infantil..."
+              required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="cdd" className="text-base font-semibold">
-                CDD (opcional)
+                CDD *
               </Label>
               <Input
                 id="cdd"
@@ -229,6 +235,7 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
                 onChange={(e) => handleFieldChange('cdd', e.target.value)}
                 className="h-12 text-base"
                 placeholder="Ex: FCX"
+                required
               />
               {fieldErrors.cdd && (
                 <p className="text-sm text-red-500 font-medium">{fieldErrors.cdd}</p>
@@ -236,7 +243,7 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
             </div>
             <div className="space-y-2">
               <Label htmlFor="cutter" className="text-base font-semibold">
-                CUTTER (opcional)
+                CUTTER *
               </Label>
               <Input
                 id="cutter"
@@ -244,6 +251,7 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
                 onChange={(e) => handleFieldChange('cutter', e.target.value)}
                 className="h-12 text-base"
                 placeholder="Ex: C-001"
+                required
               />
               {fieldErrors.cutter && (
                 <p className="text-sm text-red-500 font-medium">{fieldErrors.cutter}</p>

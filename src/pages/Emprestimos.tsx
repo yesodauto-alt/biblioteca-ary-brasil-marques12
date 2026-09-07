@@ -298,7 +298,7 @@ export default function Emprestimos() {
                           : 'bg-blue-100 text-blue-800 hover:bg-blue-100',
                       )}
                     >
-                      {tipo}
+                      Tipo: {tipo}
                     </Badge>
                     <div className="flex items-center gap-1.5 text-base text-gray-600">
                       <Calendar className="w-4 h-4" />

@@ -19,6 +19,13 @@ import { toast } from 'sonner'
 
 type Step = 'type' | 'file' | 'mapping' | 'validation' | 'result'
 
+type ImportProgress = {
+  processed: number
+  total: number
+  imported: number
+  failed: number
+}
+
 export default function Importacao() {
   const [step, setStep] = useState<Step>('type')
   const [importType, setImportType] = useState<string | null>(null)
@@ -29,6 +36,12 @@ export default function Importacao() {
   const [validation, setValidation] = useState<ValidationResult | null>(null)
   const [validating, setValidating] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [importProgress, setImportProgress] = useState<ImportProgress>({
+    processed: 0,
+    total: 0,
+    imported: 0,
+    failed: 0,
+  })
   const [result, setResult] = useState<ImportResult | null>(null)
 
   const handleTypeSelect = (type: string) => {
@@ -63,15 +76,23 @@ export default function Importacao() {
 
   const handleConfirmImport = async () => {
     if (!validation || !importType) return
+    const total = validation.valid.length
     setImporting(true)
+    setImportProgress({ processed: 0, total, imported: 0, failed: 0 })
     let imported = 0
     let failed = 0
     const collection = IMPORT_CONFIGS[importType].collection
-    for (const record of validation.valid) {
+    for (const [index, record] of validation.valid.entries()) {
       const data = normalizeRecord(record, importType)
       const ok = await createImportedRecord(collection, data)
       if (ok) imported++
       else failed++
+      setImportProgress({
+        processed: index + 1,
+        total,
+        imported,
+        failed,
+      })
     }
     setResult({
       total: validation.valid.length + validation.problems.length,
@@ -92,6 +113,7 @@ export default function Importacao() {
     setRows([])
     setMapping({})
     setValidation(null)
+    setImportProgress({ processed: 0, total: 0, imported: 0, failed: 0 })
     setResult(null)
   }
 
@@ -140,6 +162,7 @@ export default function Importacao() {
           validation={validation}
           validating={validating}
           importing={importing}
+          progress={importProgress}
           onBack={() => setStep('mapping')}
           onConfirm={handleConfirmImport}
         />

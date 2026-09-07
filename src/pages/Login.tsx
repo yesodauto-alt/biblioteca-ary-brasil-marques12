@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookMarked, LogIn, AlertCircle } from 'lucide-react'
+import { BookMarked, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -83,15 +84,25 @@ export default function Login() {
             <Label htmlFor="password" className="text-lg font-semibold text-gray-800">
               Senha
             </Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Sua senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-12 text-base px-4 border-gray-200 focus-visible:ring-2 focus-visible:ring-[#1F5C8B]/30"
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12 text-base px-4 pr-12 border-gray-200 focus-visible:ring-2 focus-visible:ring-[#1F5C8B]/30"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#1F5C8B]"
+                aria-label={showPassword ? 'Ocultar senha' : 'Visualizar senha'}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
 
           <Button

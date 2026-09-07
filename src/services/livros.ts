@@ -19,7 +19,7 @@ export interface Livro {
 }
 
 export interface LivroFormData {
-  numero_cadastro: string
+  numero_cadastro?: string
   titulo: string
   autor: string
   editora: string
