@@ -3,6 +3,7 @@ import { User, Phone, Loader2, AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { searchLeitores, type Leitor } from '@/services/leitores'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 
 interface LeitorSearchProps {
   onLeitorSelected: (leitor: Leitor) => void
@@ -101,7 +102,7 @@ export function LeitorSearch({ onLeitorSelected, autoFocus = true }: LeitorSearc
                 </Badge>
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 ml-8">
-                <span className="text-base text-gray-600">Cadastro: {leitor.numero_cadastro}</span>
+                <span className="text-base text-gray-600">Cadastro: {formatNumeroCadastro(leitor.numero_cadastro)}</span>
                 {leitor.telefone && (
                   <span className="text-base text-gray-600 flex items-center gap-1">
                     <Phone className="w-4 h-4" /> {leitor.telefone}

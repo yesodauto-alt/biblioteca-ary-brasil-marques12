@@ -26,7 +26,7 @@ export default function Configuracoes() {
             Biblioteca
           </TabsTrigger>
           <TabsTrigger value="voluntarios" className="text-sm font-medium">
-            Voluntários
+            Equipe & Voluntários
           </TabsTrigger>
         </TabsList>
         <TabsContent value="emprestimos" className="mt-6">

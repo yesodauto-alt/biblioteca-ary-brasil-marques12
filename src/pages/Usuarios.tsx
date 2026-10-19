@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { LeitorForm } from '@/components/usuarios/LeitorForm'
 import { LeitorFicha } from '@/components/usuarios/LeitorFicha'
 import { getLeitores, type Leitor } from '@/services/leitores'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 import { useRealtime } from '@/hooks/use-realtime'
 import { toast } from 'sonner'
 
@@ -45,10 +46,15 @@ export default function Usuarios() {
     return leitores.filter((l) => {
       if (statusFilter && l.status !== statusFilter) return false
       if (!q) return true
+      const numRaw = String(l.numero_cadastro || '').toLowerCase()
+      const numFmt = formatNumeroCadastro(l.numero_cadastro).toLowerCase()
+      const nome = String(l.nome_completo || '').toLowerCase()
+      const tel = String(l.telefone || '').toLowerCase()
       return (
-        l.numero_cadastro.toLowerCase().includes(q) ||
-        l.nome_completo.toLowerCase().includes(q) ||
-        l.telefone.toLowerCase().includes(q)
+        numRaw.includes(q) ||
+        numFmt.includes(q) ||
+        nome.includes(q) ||
+        tel.includes(q)
       )
     })
   }, [leitores, search, statusFilter])
@@ -61,7 +67,7 @@ export default function Usuarios() {
   const handleCreated = (created?: Leitor) => {
     if (created?.numero_cadastro) {
       toast.success('Usuário cadastrado com sucesso.', {
-        description: `Número de cadastro: ${created.numero_cadastro}`,
+        description: `Número de cadastro: ${formatNumeroCadastro(created.numero_cadastro)}`,
       })
     } else {
       toast.success('Dados atualizados com sucesso.')
@@ -137,7 +143,7 @@ export default function Usuarios() {
             >
               <div className="flex items-center gap-2">
                 <span className="md:hidden text-sm font-bold text-gray-500">Nº </span>
-                <span className="text-base font-bold text-[#1F5C8B]">{leitor.numero_cadastro}</span>
+                <span className="text-base font-bold text-[#1F5C8B]">{formatNumeroCadastro(leitor.numero_cadastro)}</span>
               </div>
               <span className="text-base font-semibold text-gray-900 break-words">
                 {leitor.nome_completo}

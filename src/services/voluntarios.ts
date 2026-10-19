@@ -1,12 +1,14 @@
 import pb from '@/lib/pocketbase/client'
 
 export type VoluntarioStatus = 'ativo' | 'inativo'
+export type VoluntarioRole = 'administrador' | 'voluntario'
 
 export interface Voluntario {
   id: string
   matricula: string
   nome: string
   status: VoluntarioStatus
+  role?: VoluntarioRole
   created: string
   updated: string
 }
@@ -14,6 +16,7 @@ export interface Voluntario {
 export interface VoluntarioFormData {
   nome: string
   status?: VoluntarioStatus
+  role?: VoluntarioRole
 }
 
 export const getVoluntarios = async (): Promise<Voluntario[]> => {
@@ -35,6 +38,7 @@ export const createVoluntario = async (data: VoluntarioFormData): Promise<Volunt
   return await pb.collection('voluntarios').create<Voluntario>({
     nome: data.nome,
     status: data.status || 'ativo',
+    role: data.role || 'voluntario',
   })
 }
 

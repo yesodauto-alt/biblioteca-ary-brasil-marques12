@@ -40,21 +40,26 @@ function fromDb(collection: string, row: RecordValue): RecordValue {
     updated: row.updated_at ?? row.updated,
   }
   if (collection === 'emprestimos') {
-    value.leitor = row.leitor_id
-    value.livro = row.livro_id
-    value.responsavel_voluntario = row.responsavel_voluntario_id
+    value.leitor = row.leitor_id ?? (typeof row.leitor === 'object' ? row.leitor?.id : row.leitor)
+    value.livro = row.livro_id ?? (typeof row.livro === 'object' ? row.livro?.id : row.livro)
+    value.responsavel_voluntario =
+      row.responsavel_voluntario_id ??
+      (typeof row.responsavel_voluntario === 'object'
+        ? row.responsavel_voluntario?.id
+        : row.responsavel_voluntario)
     value.expand = {
-      ...(row.leitor ? { leitor: fromDb('leitores', row.leitor) } : {}),
-      ...(row.livro ? { livro: fromDb('livros', row.livro) } : {}),
-      ...(row.responsavel_voluntario
+      ...(row.leitor && typeof row.leitor === 'object' ? { leitor: fromDb('leitores', row.leitor) } : {}),
+      ...(row.livro && typeof row.livro === 'object' ? { livro: fromDb('livros', row.livro) } : {}),
+      ...(row.responsavel_voluntario && typeof row.responsavel_voluntario === 'object'
         ? { responsavel_voluntario: fromDb('voluntarios', row.responsavel_voluntario) }
         : {}),
     }
   }
   if (collection === 'cursos_livros') {
-    value.curso = row.curso_id
-    value.livro = row.livro_id
-    value.expand = row.livro ? { livro: fromDb('livros', row.livro) } : {}
+    value.curso = row.curso_id ?? (typeof row.curso === 'object' ? row.curso?.id : row.curso)
+    value.livro = row.livro_id ?? (typeof row.livro === 'object' ? row.livro?.id : row.livro)
+    value.expand =
+      row.livro && typeof row.livro === 'object' ? { livro: fromDb('livros', row.livro) } : {}
   }
   if (collection === 'voluntarios' && row.matricula != null) value.matricula = String(row.matricula)
   return value
@@ -137,13 +142,23 @@ class Collection {
 
   async getOne<T = RecordValue>(id: string): Promise<T> {
     const table = TABLES[this.name]
-    const { data, error } = await supabase
-      .from(table)
-      .select(SELECTS[this.name] ?? '*')
-      .eq('id', id)
-      .single()
-    if (error || !data) throw new Error('Registro não encontrado')
-    return fromDb(this.name, data) as T
+    try {
+      const { data, error } = await supabase
+        .from(table)
+        .select(SELECTS[this.name] ?? '*')
+        .eq('id', id)
+        .maybeSingle()
+      if (!error && data) {
+        return fromDb(this.name, data) as T
+      }
+    } catch {
+      /* ignore and try memory fallback */
+    }
+
+    const rows = await this.load()
+    const found = rows.find((item) => String(item.id) === String(id))
+    if (found) return found as T
+    throw new Error('Registro não encontrado')
   }
 
   async getFirstListItem<T = RecordValue>(filter: string, options: RecordValue = {}): Promise<T> {

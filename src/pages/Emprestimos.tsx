@@ -21,6 +21,7 @@ import {
 } from '@/lib/loan-utils'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 
 type FilterType = 'todos' | 'em-dia' | 'vence-hoje' | 'atrasados' | 'comum' | 'estudo'
 
@@ -93,10 +94,12 @@ export default function Emprestimos() {
     return [...emprestimos].sort((a, b) => {
       const sa = getSituacao(a.data_prevista_devolucao)
       const sb = getSituacao(b.data_prevista_devolucao)
-      const pa = SITUACAO_PRIORITY[sa]
-      const pb = SITUACAO_PRIORITY[sb]
+      const pa = SITUACAO_PRIORITY[sa] ?? 3
+      const pb = SITUACAO_PRIORITY[sb] ?? 3
       if (pa !== pb) return pa - pb
-      return a.data_prevista_devolucao.localeCompare(b.data_prevista_devolucao)
+      const da = String(a.data_prevista_devolucao || '')
+      const db = String(b.data_prevista_devolucao || '')
+      return da.localeCompare(db)
     })
   }, [emprestimos])
 
@@ -110,10 +113,10 @@ export default function Emprestimos() {
       if (filter === 'comum' && (emp.tipo_emprestimo || 'comum') !== 'comum') return false
       if (filter === 'estudo' && emp.tipo_emprestimo !== 'estudo') return false
       if (!q) return true
-      const nome = emp.expand?.leitor?.nome_completo?.toLowerCase() || ''
-      const numLeitor = emp.expand?.leitor?.numero_cadastro?.toLowerCase() || ''
-      const titulo = emp.expand?.livro?.titulo?.toLowerCase() || ''
-      const numLivro = emp.expand?.livro?.numero_cadastro?.toLowerCase() || ''
+      const nome = String(emp.expand?.leitor?.nome_completo || '').toLowerCase()
+      const numLeitor = String(emp.expand?.leitor?.numero_cadastro || '').toLowerCase()
+      const titulo = String(emp.expand?.livro?.titulo || '').toLowerCase()
+      const numLivro = String(emp.expand?.livro?.numero_cadastro || '').toLowerCase()
       return nome.includes(q) || numLeitor.includes(q) || titulo.includes(q) || numLivro.includes(q)
     })
   }, [sorted, search, filter])
@@ -202,7 +205,7 @@ export default function Emprestimos() {
                 <span className="text-lg font-bold text-gray-900">{leitor.nome_completo}</span>
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 ml-8">
-                <span className="text-base text-gray-600">Cadastro: {leitor.numero_cadastro}</span>
+                <span className="text-base text-gray-600">Cadastro: {formatNumeroCadastro(leitor.numero_cadastro)}</span>
                 {leitor.telefone && (
                   <span className="text-base text-gray-600 flex items-center gap-1">
                     <Phone className="w-4 h-4" /> {leitor.telefone}
@@ -252,9 +255,11 @@ export default function Emprestimos() {
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation()
-                        if (emp.expand?.leitor) openLeitor(emp.expand.leitor.id)
+                        const targetId = emp.expand?.leitor?.id || emp.leitor
+                        if (targetId) openLeitor(targetId)
                       }}
                       className="flex items-start gap-3 text-left hover:opacity-80 transition-opacity flex-1"
                     >
@@ -265,15 +270,17 @@ export default function Emprestimos() {
                         </p>
                         <p className="text-base text-gray-600">
                           {emp.expand?.leitor?.numero_cadastro
-                            ? `Nº ${emp.expand.leitor.numero_cadastro}`
+                            ? `Nº ${formatNumeroCadastro(emp.expand.leitor.numero_cadastro)}`
                             : '—'}
                         </p>
                       </div>
                     </button>
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation()
-                        if (emp.expand?.livro) openLivro(emp.expand.livro.id)
+                        const targetId = emp.expand?.livro?.id || emp.livro
+                        if (targetId) openLivro(targetId)
                       }}
                       className="flex items-start gap-3 text-left hover:opacity-80 transition-opacity flex-1"
                     >
@@ -284,7 +291,7 @@ export default function Emprestimos() {
                         </p>
                         <p className="text-base text-gray-600">
                           {emp.expand?.livro?.numero_cadastro
-                            ? `Nº ${emp.expand.livro.numero_cadastro}`
+                            ? `Nº ${formatNumeroCadastro(emp.expand.livro.numero_cadastro)}`
                             : '—'}
                         </p>
                       </div>

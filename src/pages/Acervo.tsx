@@ -25,6 +25,7 @@ import {
 import { LivroForm } from '@/components/acervo/LivroForm'
 import { LivroFicha } from '@/components/acervo/LivroFicha'
 import { getLivros, STATUS_LABELS, STATUS_BADGE_CLASSES, type Livro } from '@/services/livros'
+import { formatNumeroCadastro, parseNumeroCadastroSortKey } from '@/lib/code-formatter'
 import { useRealtime } from '@/hooks/use-realtime'
 import { toast } from 'sonner'
 
@@ -84,14 +85,23 @@ export default function Acervo() {
     return livros.filter((l) => {
       if (statusFilter && l.status !== statusFilter) return false
       if (!q) return true
+      const numRaw = String(l.numero_cadastro || '').toLowerCase()
+      const numClean = formatNumeroCadastro(l.numero_cadastro).toLowerCase()
+      const titulo = String(l.titulo || '').toLowerCase()
+      const autor = String(l.autor || '').toLowerCase()
+      const editora = String(l.editora || '').toLowerCase()
+      const cdd = String(l.cdd || '').toLowerCase()
+      const descricao = String(l.descricao || '').toLowerCase()
+      const cutter = String(l.cutter || '').toLowerCase()
       return (
-        l.numero_cadastro.toLowerCase().includes(q) ||
-        l.titulo.toLowerCase().includes(q) ||
-        l.autor.toLowerCase().includes(q) ||
-        l.editora.toLowerCase().includes(q) ||
-        (l.cdd || '').toLowerCase().includes(q) ||
-        (l.descricao || '').toLowerCase().includes(q) ||
-        (l.cutter || '').toLowerCase().includes(q)
+        numRaw.includes(q) ||
+        numClean.includes(q) ||
+        titulo.includes(q) ||
+        autor.includes(q) ||
+        editora.includes(q) ||
+        cdd.includes(q) ||
+        descricao.includes(q) ||
+        cutter.includes(q)
       )
     })
   }, [livros, search, statusFilter])
@@ -103,11 +113,12 @@ export default function Acervo() {
       const valB = (b[sortField] || '').trim()
 
       if (sortField === 'numero_cadastro') {
-        const numA = parseInt(valA, 10)
-        const numB = parseInt(valB, 10)
-        if (!isNaN(numA) && !isNaN(numB)) {
-          return sortOrder === 'asc' ? numA - numB : numB - numA
+        const keyA = parseNumeroCadastroSortKey(valA)
+        const keyB = parseNumeroCadastroSortKey(valB)
+        if (keyA.num !== keyB.num) {
+          return sortOrder === 'asc' ? keyA.num - keyB.num : keyB.num - keyA.num
         }
+        return sortOrder === 'asc' ? keyA.raw.localeCompare(keyB.raw) : keyB.raw.localeCompare(keyA.raw)
       }
 
       const cmp = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base', numeric: true })
@@ -291,7 +302,7 @@ export default function Acervo() {
             >
               <div className="flex items-center gap-2">
                 <span className="md:hidden text-sm font-bold text-gray-500">Nº </span>
-                <span className="text-base font-bold text-[#1F5C8B]">{livro.numero_cadastro}</span>
+                <span className="text-base font-bold text-[#1F5C8B]">{formatNumeroCadastro(livro.numero_cadastro)}</span>
               </div>
               <span className="text-base font-semibold text-gray-900 break-words">
                 {livro.titulo}

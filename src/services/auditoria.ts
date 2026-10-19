@@ -90,7 +90,7 @@ export async function getMovementsFromEmprestimos(
   }
 
   if (allAudits.length === 0) return emprestimos.map(makeMovementFromEmprestimo)
-  allAudits.sort((a, b) => b.created.localeCompare(a.created))
+  allAudits.sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')))
   return allAudits.map((audit) => {
     const emp = empMap.get(audit.registro_id)
     return makeMovementFromAudit(audit, emp)

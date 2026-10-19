@@ -7,6 +7,7 @@ import { getDevolucoesHoje, type EmprestimoWithLeitor } from '@/services/emprest
 import { useRealtime } from '@/hooks/use-realtime'
 import { toast } from 'sonner'
 import { formatDateTime } from '@/lib/loan-utils'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 
 export default function DevolucoesHoje() {
   const [devolucoes, setDevolucoes] = useState<EmprestimoWithLeitor[]>([])
@@ -74,7 +75,7 @@ export default function DevolucoesHoje() {
                       {emp.expand?.leitor?.nome_completo || 'Leitor não encontrado'}
                     </p>
                     <p className="text-base text-gray-600">
-                      Nº {emp.expand?.leitor?.numero_cadastro || '—'}
+                      Nº {formatNumeroCadastro(emp.expand?.leitor?.numero_cadastro)}
                     </p>
                   </div>
                 </button>
@@ -85,7 +86,7 @@ export default function DevolucoesHoje() {
                       {emp.expand?.livro?.titulo || 'Livro não encontrado'}
                     </p>
                     <p className="text-base text-gray-600">
-                      Nº {emp.expand?.livro?.numero_cadastro || '—'}
+                      Nº {formatNumeroCadastro(emp.expand?.livro?.numero_cadastro)}
                     </p>
                   </div>
                 </div>

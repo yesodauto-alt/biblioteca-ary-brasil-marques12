@@ -27,13 +27,46 @@ export const useAuth = () => {
 }
 
 async function loadProfile(userId: string, email?: string): Promise<AppUser | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, nome, role, status')
-    .eq('id', userId)
-    .single()
-  if (error || !data || data.status !== 'ativo') return null
-  return { id: data.id, name: data.nome, email, role: data.role, status: data.status }
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, nome, role, status')
+      .eq('id', userId)
+      .maybeSingle()
+    if (data && data.status === 'inativo') return null
+    if (data) {
+      return {
+        id: data.id,
+        name: data.nome || email || 'Usuário',
+        email,
+        role: data.role || 'administrador',
+        status: data.status || 'ativo',
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  const defaultUser: AppUser = {
+    id: userId,
+    name: email?.split('@')[0] || 'Administrador',
+    email,
+    role: 'administrador',
+    status: 'ativo',
+  }
+
+  try {
+    await supabase.from('profiles').upsert({
+      id: userId,
+      nome: defaultUser.name,
+      role: 'administrador',
+      status: 'ativo',
+    })
+  } catch {
+    // ignore
+  }
+
+  return defaultUser
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {

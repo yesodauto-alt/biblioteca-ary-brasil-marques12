@@ -1,5 +1,6 @@
 import pb from '@/lib/pocketbase/client'
 import { getSituacao, getTodayInTimezone, getDaysOverdue, isValidDate } from '@/lib/loan-utils'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 
 export interface DashboardStats {
   livrosEmprestados: number
@@ -81,7 +82,7 @@ export async function fetchDashboardData(): Promise<{
     id: e.id,
     leitorId: e.leitor,
     leitorNome: e.expand?.leitor?.nome_completo || '—',
-    leitorNumero: e.expand?.leitor?.numero_cadastro || '—',
+    leitorNumero: formatNumeroCadastro(e.expand?.leitor?.numero_cadastro),
     livroId: e.livro,
     livroTitulo: e.expand?.livro?.titulo || '—',
     dataPrevistaDevolucao: e.data_prevista_devolucao,
@@ -118,7 +119,7 @@ export async function searchDashboard(query: string): Promise<SearchResult[]> {
         type: 'leitor',
         id: l.id,
         primary: l.nome_completo,
-        secondary: `Nº ${l.numero_cadastro}`,
+        secondary: `Nº ${formatNumeroCadastro(l.numero_cadastro)}`,
       })
     })
   }
@@ -129,7 +130,7 @@ export async function searchDashboard(query: string): Promise<SearchResult[]> {
         type: 'livro',
         id: l.id,
         primary: l.titulo,
-        secondary: `${l.autor} — Nº ${l.numero_cadastro}`,
+        secondary: `${l.autor} — Nº ${formatNumeroCadastro(l.numero_cadastro)}`,
       })
     })
   }

@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDateTime } from '@/lib/loan-utils'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 import { useAuth } from '@/hooks/use-auth'
 
 interface LivroFichaProps {
@@ -70,13 +71,26 @@ export function LivroFicha({ livroId, open, onOpenChange }: LivroFichaProps) {
     }
     setLoading(true)
     try {
-      const [l, emps] = await Promise.all([getLivro(livroId), getEmprestimosByLivro(livroId)])
+      const l = await getLivro(livroId)
       setLivro(l)
-      setEmprestimos(emps)
-      const movs = await getMovementsFromEmprestimos(emps)
-      setMovements(movs)
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('Erro ao buscar livro:', err)
+      toast.error('Erro ao carregar dados do livro.')
+    }
+
+    try {
+      const emps = await getEmprestimosByLivro(livroId)
+      setEmprestimos(emps || [])
+      try {
+        const movs = await getMovementsFromEmprestimos(emps || [])
+        setMovements(movs || [])
+      } catch {
+        setMovements([])
+      }
+    } catch (err) {
+      console.error('Erro ao buscar empréstimos do livro:', err)
+      setEmprestimos([])
+      setMovements([])
     } finally {
       setLoading(false)
     }
@@ -108,7 +122,7 @@ export function LivroFicha({ livroId, open, onOpenChange }: LivroFichaProps) {
                 <h2 className="text-2xl font-bold text-gray-900 break-words">{livro.titulo}</h2>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <span className="text-base font-medium text-gray-600">
-                    Nº {livro.numero_cadastro}
+                    Nº {formatNumeroCadastro(livro.numero_cadastro)}
                   </span>
                   <Badge className={STATUS_BADGE_CLASSES[livro.status]}>
                     {STATUS_LABELS[livro.status]}
@@ -248,7 +262,12 @@ export function LivroFicha({ livroId, open, onOpenChange }: LivroFichaProps) {
                 )}
               </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-base font-semibold">Não foi possível carregar os dados deste livro.</p>
+              <p className="text-sm text-gray-400 mt-1">Verifique sua conexão ou tente novamente.</p>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
       <LivroForm

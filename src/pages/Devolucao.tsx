@@ -36,14 +36,18 @@ import {
 import { searchLeitores, type Leitor } from '@/services/leitores'
 import { getConfiguracoes, type Configuracoes } from '@/services/configuracoes'
 import { formatDate, formatDateTime, normalizeToDate } from '@/lib/loan-utils'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 function getLoanSituation(dataPrevista: string): { label: string; isLate: boolean } {
+  if (!dataPrevista) return { label: 'Data não informada', isLate: false }
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const normalized = normalizeToDate(dataPrevista)
+  if (!normalized) return { label: 'Data não informada', isLate: false }
   const due = new Date(normalized + 'T00:00:00')
+  if (isNaN(due.getTime())) return { label: 'Data não informada', isLate: false }
   due.setHours(0, 0, 0, 0)
   return { label: today > due ? 'Atrasado' : 'No prazo', isLate: today > due }
 }
@@ -403,7 +407,7 @@ export default function Devolucao() {
                     <div>
                       <p className="font-bold text-gray-900">{l.nome_completo}</p>
                       <p className="text-xs text-gray-500">
-                        Cadastro: {l.numero_cadastro} {l.telefone ? `• Tel: ${l.telefone}` : ''}
+                        Cadastro: {formatNumeroCadastro(l.numero_cadastro)} {l.telefone ? `• Tel: ${l.telefone}` : ''}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-xs text-[#1F5C8B] border-[#1F5C8B]/40">
@@ -452,7 +456,7 @@ export default function Devolucao() {
                             {loan.tipo_emprestimo === 'estudo' ? 'Estudo' : 'Comum'}
                           </Badge>
                           <span className="text-xs font-semibold text-gray-500">
-                            Livro Nº {loan.expand?.livro?.numero_cadastro || '—'}
+                            Livro Nº {formatNumeroCadastro(loan.expand?.livro?.numero_cadastro)}
                           </span>
                         </div>
                         <p className="font-bold text-gray-900 line-clamp-2">
@@ -501,7 +505,7 @@ export default function Devolucao() {
                   {emprestimo.expand?.livro?.titulo || 'Título não encontrado'}
                 </span>
                 <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-                  Nº {emprestimo.expand?.livro?.numero_cadastro || '—'}
+                  Nº {formatNumeroCadastro(emprestimo.expand?.livro?.numero_cadastro)}
                 </Badge>
               </div>
 
@@ -511,7 +515,7 @@ export default function Devolucao() {
                   {emprestimo.expand?.leitor?.nome_completo || 'Leitor não encontrado'}
                 </span>
                 <Badge className="bg-gray-200 text-gray-700 hover:bg-gray-200">
-                  Nº {emprestimo.expand?.leitor?.numero_cadastro || '—'}
+                  Nº {formatNumeroCadastro(emprestimo.expand?.leitor?.numero_cadastro)}
                 </Badge>
               </div>
 

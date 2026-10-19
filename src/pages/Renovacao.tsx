@@ -9,6 +9,7 @@ import { getEmprestimosByLeitor, renovarEmprestimo, type Emprestimo } from '@/se
 import { getConfiguracoes, type Configuracoes as ConfigType } from '@/services/configuracoes'
 import { LeitorSearch } from '@/components/usuarios/LeitorSearch'
 import { formatDate } from '@/lib/loan-utils'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 import { toast } from 'sonner'
 
 function calcNewReturnDate(tipo: string, prazo: number): string {
@@ -110,7 +111,7 @@ export default function Renovacao() {
                     {selectedLeitor.nome_completo}
                   </span>
                   <span className="text-base text-gray-600 ml-2">
-                    Nº {selectedLeitor.numero_cadastro}
+                    Nº {formatNumeroCadastro(selectedLeitor.numero_cadastro)}
                   </span>
                 </div>
                 <Button
@@ -178,7 +179,7 @@ export default function Renovacao() {
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 ml-7 text-base text-gray-600">
-                          <span>Cadastro: {emp.expand?.livro?.numero_cadastro || '—'}</span>
+                          <span>Cadastro: {formatNumeroCadastro(emp.expand?.livro?.numero_cadastro)}</span>
                           <span className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             Devolução: {formatDate(emp.data_prevista_devolucao)}

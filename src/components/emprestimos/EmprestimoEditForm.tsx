@@ -23,6 +23,7 @@ import { toast } from 'sonner'
 import type { Leitor } from '@/services/leitores'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
 import { cn } from '@/lib/utils'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return '—'
@@ -196,7 +197,7 @@ export function EmprestimoEditForm({ emprestimo, onSaved, onCancel }: Emprestimo
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-bold text-gray-900">{leitor.nome_completo}</p>
-                <p className="text-sm text-gray-600">Nº {leitor.numero_cadastro}</p>
+                <p className="text-sm text-gray-600">Nº {formatNumeroCadastro(leitor.numero_cadastro)}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setEditingLeitor(true)}>
                 <ArrowLeft className="w-4 h-4 mr-1" /> Trocar
@@ -219,7 +220,7 @@ export function EmprestimoEditForm({ emprestimo, onSaved, onCancel }: Emprestimo
               <div className="min-w-0">
                 <p className="font-bold text-gray-900">{foundLivro.titulo}</p>
                 <p className="text-sm text-gray-600">
-                  Nº {foundLivro.numero_cadastro} · {foundLivro.autor}
+                  Nº {formatNumeroCadastro(foundLivro.numero_cadastro)} · {foundLivro.autor}
                 </p>
               </div>
               <Button
@@ -280,7 +281,7 @@ export function EmprestimoEditForm({ emprestimo, onSaved, onCancel }: Emprestimo
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <span className="text-base font-bold text-[#1F5C8B]">
-                            {livro.numero_cadastro}
+                            {formatNumeroCadastro(livro.numero_cadastro)}
                           </span>
                           <span className="text-base font-semibold text-gray-900 ml-2 break-words">
                             {livro.titulo}

@@ -34,9 +34,19 @@ export default function Login() {
 
     if (error) {
       const msg = error?.message || ''
-      setErrorMessage(
-        msg.includes('inativa') ? msg : 'E-mail ou senha incorretos. Tente novamente.',
-      )
+      if (msg.includes('inativa')) {
+        setErrorMessage(msg)
+      } else if (
+        msg.toLowerCase().includes('fetch') ||
+        msg.toLowerCase().includes('network') ||
+        msg.toLowerCase().includes('connection')
+      ) {
+        setErrorMessage(
+          'Não foi possível conectar ao banco de dados Supabase. Verifique se o projeto está pausado no painel da Supabase.',
+        )
+      } else {
+        setErrorMessage('E-mail ou senha incorretos. Tente novamente.')
+      }
       setIsSubmitting(false)
     } else {
       navigate('/')

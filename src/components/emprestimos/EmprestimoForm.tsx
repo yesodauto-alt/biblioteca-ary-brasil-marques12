@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 import type { Leitor } from '@/services/leitores'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/loan-utils'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 
 interface EmprestimoFormProps {
   open: boolean
@@ -228,7 +229,7 @@ export function EmprestimoForm({
                         <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0">
                             <span className="text-base font-bold text-[#1F5C8B]">
-                              {livro.numero_cadastro}
+                              {formatNumeroCadastro(livro.numero_cadastro)}
                             </span>
                             <span className="text-base font-semibold text-gray-900 ml-2 break-words">
                               {livro.titulo}
@@ -256,13 +257,13 @@ export function EmprestimoForm({
               <div>
                 <p className="text-sm text-gray-500 font-medium">Usuário</p>
                 <p className="text-base font-bold text-gray-900">{leitor!.nome_completo}</p>
-                <p className="text-sm text-gray-600">Nº {leitor!.numero_cadastro}</p>
+                <p className="text-sm text-gray-600">Nº {formatNumeroCadastro(leitor!.numero_cadastro)}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 font-medium">Livro</p>
                 <p className="text-base font-bold text-gray-900">{foundLivro.titulo}</p>
                 <p className="text-sm text-gray-600">
-                  Nº {foundLivro.numero_cadastro} · {foundLivro.autor}
+                  Nº {formatNumeroCadastro(foundLivro.numero_cadastro)} · {foundLivro.autor}
                 </p>
                 <Badge className={cn('mt-1', STATUS_BADGE_CLASSES[foundLivro.status])}>
                   {STATUS_LABELS[foundLivro.status]}

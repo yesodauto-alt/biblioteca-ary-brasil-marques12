@@ -1,5 +1,6 @@
 import pb from '@/lib/pocketbase/client'
 import { getTodayInTimezone } from '@/lib/loan-utils'
+import { formatNumeroCadastro } from '@/lib/code-formatter'
 
 export interface PeriodFilter {
   start: string
@@ -65,10 +66,10 @@ function mapEmprestimo(r: any): EmprestimoRow {
     id: r.id,
     leitorId: r.leitor || '',
     leitorNome: r.expand?.leitor?.nome_completo || '—',
-    leitorNumero: r.expand?.leitor?.numero_cadastro || '—',
+    leitorNumero: formatNumeroCadastro(r.expand?.leitor?.numero_cadastro),
     livroId: r.livro || '',
     livroTitulo: r.expand?.livro?.titulo || '—',
-    livroNumero: r.expand?.livro?.numero_cadastro || '—',
+    livroNumero: formatNumeroCadastro(r.expand?.livro?.numero_cadastro),
     dataEmprestimo: r.data_emprestimo || '',
     dataPrevistaDevolucao: r.data_prevista_devolucao || '',
     dataDevolucaoReal: r.data_devolucao_real || '',
@@ -178,7 +179,7 @@ export async function fetchLivrosMaisEmprestados(
     .map(([id, { livro, count }]) => ({
       livroId: id,
       titulo: livro?.titulo || '—',
-      numeroCadastro: livro?.numero_cadastro || '—',
+      numeroCadastro: formatNumeroCadastro(livro?.numero_cadastro),
       autor: livro?.autor || '—',
       quantidade: count,
     }))
@@ -200,7 +201,7 @@ export async function fetchUsuariosMaisUtilizam(
     .map(([id, { leitor, count }]) => ({
       leitorId: id,
       nome: leitor?.nome_completo || '—',
-      numeroCadastro: leitor?.numero_cadastro || '—',
+      numeroCadastro: formatNumeroCadastro(leitor?.numero_cadastro),
       telefone: leitor?.telefone || '—',
       quantidade: count,
     }))
@@ -223,7 +224,7 @@ export async function fetchTodoAcervo(_period?: PeriodFilter): Promise<TodoAcerv
   const records = await pb.collection('livros').getFullList({ sort: 'titulo' })
   return records.map((r: any) => ({
     id: r.id,
-    numeroCadastro: r.numero_cadastro || '',
+    numeroCadastro: formatNumeroCadastro(r.numero_cadastro),
     titulo: r.titulo || '',
     autor: r.autor || '',
     editora: r.editora || '',
@@ -248,7 +249,7 @@ export async function fetchTodosLeitores(_period?: PeriodFilter): Promise<TodosL
   const records = await pb.collection('leitores').getFullList({ sort: 'nome_completo' })
   return records.map((r: any) => ({
     id: r.id,
-    numeroCadastro: r.numero_cadastro || '',
+    numeroCadastro: formatNumeroCadastro(r.numero_cadastro),
     nome: r.nome_completo || '',
     telefone: r.telefone || '—',
     email: r.email || '—',
