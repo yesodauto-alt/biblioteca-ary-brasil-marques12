@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRealtime } from '@/hooks/use-realtime'
+import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import {
   formatDateTime,
@@ -35,6 +36,7 @@ interface LeitorFichaProps {
 const TIPO_LABELS: Record<string, string> = { comum: 'Comum', estudo: 'Estudo' }
 
 export function LeitorFicha({ leitorId, open, onOpenChange }: LeitorFichaProps) {
+  const { isAdmin } = useAuth()
   const [leitor, setLeitor] = useState<Leitor | null>(null)
   const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([])
   const [movements, setMovements] = useState<AuditMovement[]>([])
@@ -146,13 +148,15 @@ export function LeitorFicha({ leitorId, open, onOpenChange }: LeitorFichaProps) 
                 >
                   <Pencil className="w-4 h-4 mr-2" /> Editar usuário
                 </Button>
-                <Button
-                  onClick={() => setDeleteOpen(true)}
-                  variant="outline"
-                  className="flex-1 h-11 text-sm font-semibold border-red-200 text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" /> Excluir usuário
-                </Button>
+                {isAdmin && (
+                  <Button
+                    onClick={() => setDeleteOpen(true)}
+                    variant="outline"
+                    className="flex-1 h-11 text-sm font-semibold border-red-200 text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" /> Excluir usuário
+                  </Button>
+                )}
               </div>
 
               <div className="space-y-3">

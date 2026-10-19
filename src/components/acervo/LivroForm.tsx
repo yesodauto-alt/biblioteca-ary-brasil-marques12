@@ -21,12 +21,14 @@ import {
 import {
   createLivro,
   updateLivro,
+  getNextNumeroCadastro,
   STATUS_LABELS,
   type LivroFormData,
   type Livro,
   type LivroStatus,
 } from '@/services/livros'
 import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
+import { toast } from 'sonner'
 
 interface LivroFormProps {
   open: boolean
@@ -39,6 +41,7 @@ const STATUS_VALUES = Object.keys(STATUS_LABELS) as LivroStatus[]
 
 export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps) {
   const [loading, setLoading] = useState(false)
+  const [autoNumero, setAutoNumero] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [form, setForm] = useState<LivroFormData>({
     numero_cadastro: '',
@@ -56,6 +59,7 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
   useEffect(() => {
     if (open) {
       if (livro) {
+        setAutoNumero('')
         setForm({
           numero_cadastro: livro.numero_cadastro,
           titulo: livro.titulo,
@@ -69,6 +73,9 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
           status: livro.status,
         })
       } else {
+        getNextNumeroCadastro()
+          .then((num) => setAutoNumero(num))
+          .catch(() => {})
         setForm({
           numero_cadastro: '',
           titulo: '',
@@ -95,19 +102,36 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
     e.preventDefault()
     setLoading(true)
     setFieldErrors({})
+
+    const errors: FieldErrors = {}
+    if (!form.titulo.trim()) errors.titulo = 'Título é obrigatório'
+    if (!form.autor.trim()) errors.autor = 'Autor é obrigatório'
+    if (!form.editora.trim()) errors.editora = 'Editora é obrigatória'
+    if (!form.categoria?.trim()) errors.categoria = 'Categoria é obrigatória'
+    if (!form.cdd?.trim()) errors.cdd = 'CDD é obrigatório'
+    if (!form.cutter?.trim()) errors.cutter = 'Cutter é obrigatório'
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      toast.error('Preencha todos os campos obrigatórios (incluindo Categoria, CDD e Cutter).')
+      setLoading(false)
+      return
+    }
+
     try {
+      const finalNumero = form.numero_cadastro?.trim() || autoNumero
       const data: LivroFormData = {
-        numero_cadastro: form.numero_cadastro.trim(),
+        numero_cadastro: finalNumero,
         titulo: form.titulo.trim(),
         autor: form.autor.trim(),
         editora: form.editora.trim(),
+        categoria: form.categoria!.trim(),
+        cdd: form.cdd!.trim(),
+        cutter: form.cutter!.trim(),
         status: form.status || 'disponível',
       }
-      if (form.categoria?.trim()) data.categoria = form.categoria.trim()
       if (form.observacoes?.trim()) data.observacoes = form.observacoes.trim()
-      if (form.cdd?.trim()) data.cdd = form.cdd.trim()
       if (form.descricao?.trim()) data.descricao = form.descricao.trim()
-      if (form.cutter?.trim()) data.cutter = form.cutter.trim()
 
       if (livro) {
         await updateLivro(livro.id, data)
@@ -139,16 +163,27 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="numero_cadastro" className="text-base font-semibold">
-              Número de Cadastro *
+              Número de Cadastro {livro && '*'}
             </Label>
             <Input
               id="numero_cadastro"
               value={form.numero_cadastro}
               onChange={(e) => handleFieldChange('numero_cadastro', e.target.value)}
               className="h-12 text-base"
-              placeholder="Ex: 0001"
-              required
+              placeholder={
+                livro
+                  ? 'Ex: 0001'
+                  : autoNumero
+                    ? `Próximo automático: ${autoNumero} (ou digite outro)`
+                    : 'Gerado automaticamente a partir do último número'
+              }
+              required={!!livro}
             />
+            {!livro && (
+              <p className="text-xs text-gray-500">
+                Deixe em branco para gerar automaticamente {autoNumero ? `(Nº ${autoNumero})` : 'a partir do último número cadastrado'}.
+              </p>
+            )}
             {fieldErrors.numero_cadastro && (
               <p className="text-sm text-red-500 font-medium">{fieldErrors.numero_cadastro}</p>
             )}
@@ -207,7 +242,7 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
 
           <div className="space-y-2">
             <Label htmlFor="categoria" className="text-base font-semibold">
-              Categoria (opcional)
+              Categoria *
             </Label>
             <Input
               id="categoria"
@@ -215,13 +250,17 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
               onChange={(e) => handleFieldChange('categoria', e.target.value)}
               className="h-12 text-base"
               placeholder="Ex: Romance, Espiritismo, Infantil..."
+              required
             />
+            {fieldErrors.categoria && (
+              <p className="text-sm text-red-500 font-medium">{fieldErrors.categoria}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="cdd" className="text-base font-semibold">
-                CDD (opcional)
+                CDD *
               </Label>
               <Input
                 id="cdd"
@@ -229,14 +268,15 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
                 onChange={(e) => handleFieldChange('cdd', e.target.value)}
                 className="h-12 text-base"
                 placeholder="Ex: FCX"
+                required
               />
               {fieldErrors.cdd && (
                 <p className="text-sm text-red-500 font-medium">{fieldErrors.cdd}</p>
-              )}{' '}
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="cutter" className="text-base font-semibold">
-                CUTTER (opcional)
+                CUTTER *
               </Label>
               <Input
                 id="cutter"
@@ -244,6 +284,7 @@ export function LivroForm({ open, onOpenChange, onSaved, livro }: LivroFormProps
                 onChange={(e) => handleFieldChange('cutter', e.target.value)}
                 className="h-12 text-base"
                 placeholder="Ex: C-001"
+                required
               />
               {fieldErrors.cutter && (
                 <p className="text-sm text-red-500 font-medium">{fieldErrors.cutter}</p>

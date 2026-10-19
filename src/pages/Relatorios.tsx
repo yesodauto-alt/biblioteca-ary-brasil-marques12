@@ -61,10 +61,10 @@ export default function Relatorios() {
 
   useRealtime('emprestimos', () => loadData())
   useRealtime('livros', () => {
-    if (['livros-disponiveis', 'livros-mais-emprestados'].includes(reportType)) loadData()
+    if (['livros-disponiveis', 'livros-mais-emprestados', 'todo-acervo'].includes(reportType)) loadData()
   })
   useRealtime('leitores', () => {
-    if (reportType === 'usuarios-mais-utilizam') loadData()
+    if (['usuarios-mais-utilizam', 'todos-leitores'].includes(reportType)) loadData()
   })
   useRealtime('auditoria', () => {
     if (reportType === 'renovacoes-realizadas') loadData()
@@ -95,7 +95,7 @@ export default function Relatorios() {
         </p>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {(Object.entries(defs) as [ReportType, ReportDef][]).map(([key, def]) => (
           <Button
             key={key}

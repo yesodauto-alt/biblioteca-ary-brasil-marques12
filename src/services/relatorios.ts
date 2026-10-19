@@ -206,3 +206,54 @@ export async function fetchUsuariosMaisUtilizam(
     }))
     .sort((a, b) => b.quantidade - a.quantidade)
 }
+
+export interface TodoAcervoRow {
+  id: string
+  numeroCadastro: string
+  titulo: string
+  autor: string
+  editora: string
+  categoria: string
+  cdd: string
+  cutter: string
+  status: string
+}
+
+export async function fetchTodoAcervo(_period?: PeriodFilter): Promise<TodoAcervoRow[]> {
+  const records = await pb.collection('livros').getFullList({ sort: 'titulo' })
+  return records.map((r: any) => ({
+    id: r.id,
+    numeroCadastro: r.numero_cadastro || '',
+    titulo: r.titulo || '',
+    autor: r.autor || '',
+    editora: r.editora || '',
+    categoria: r.categoria || '—',
+    cdd: r.cdd || '—',
+    cutter: r.cutter || '—',
+    status: r.status || 'disponível',
+  }))
+}
+
+export interface TodosLeitoresRow {
+  id: string
+  numeroCadastro: string
+  nome: string
+  telefone: string
+  email: string
+  dataCadastro: string
+  status: string
+}
+
+export async function fetchTodosLeitores(_period?: PeriodFilter): Promise<TodosLeitoresRow[]> {
+  const records = await pb.collection('leitores').getFullList({ sort: 'nome_completo' })
+  return records.map((r: any) => ({
+    id: r.id,
+    numeroCadastro: r.numero_cadastro || '',
+    nome: r.nome_completo || '',
+    telefone: r.telefone || '—',
+    email: r.email || '—',
+    dataCadastro: r.data_cadastro || '',
+    status: r.status || 'ativo',
+  }))
+}
+

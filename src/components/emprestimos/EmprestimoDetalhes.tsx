@@ -9,6 +9,7 @@ import { EmprestimoEditForm } from '@/components/emprestimos/EmprestimoEditForm'
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/use-auth'
 import {
   formatDate,
   formatDateTime,
@@ -32,6 +33,7 @@ export function EmprestimoDetalhes({
   onOpenChange,
   onChanged,
 }: EmprestimoDetalhesProps) {
+  const { isAdmin } = useAuth()
   const [emprestimo, setEmprestimo] = useState<EmprestimoWithLeitor | null>(null)
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'details' | 'edit'>('details')
@@ -202,13 +204,15 @@ export function EmprestimoDetalhes({
                 >
                   <Pencil className="w-4 h-4 mr-2" /> Editar empréstimo
                 </Button>
-                <Button
-                  onClick={() => setDeleteOpen(true)}
-                  variant="outline"
-                  className="flex-1 h-11 text-sm font-semibold border-red-200 text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" /> Excluir empréstimo
-                </Button>
+                {isAdmin && (
+                  <Button
+                    onClick={() => setDeleteOpen(true)}
+                    variant="outline"
+                    className="flex-1 h-11 text-sm font-semibold border-red-200 text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" /> Excluir empréstimo
+                  </Button>
+                )}
               </div>
             </div>
           ) : null}

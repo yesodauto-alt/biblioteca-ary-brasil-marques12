@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDateTime } from '@/lib/loan-utils'
+import { useAuth } from '@/hooks/use-auth'
 
 interface LivroFichaProps {
   livroId: string | null
@@ -30,6 +31,7 @@ interface LivroFichaProps {
 }
 
 export function LivroFicha({ livroId, open, onOpenChange }: LivroFichaProps) {
+  const { isAdmin } = useAuth()
   const [livro, setLivro] = useState<Livro | null>(null)
   const [emprestimos, setEmprestimos] = useState<EmprestimoWithLeitor[]>([])
   const [movements, setMovements] = useState<AuditMovement[]>([])
@@ -143,13 +145,15 @@ export function LivroFicha({ livroId, open, onOpenChange }: LivroFichaProps) {
                 >
                   <Pencil className="w-4 h-4 mr-2" /> Editar livro
                 </Button>
-                <Button
-                  onClick={() => setDeleteOpen(true)}
-                  variant="outline"
-                  className="flex-1 h-11 text-sm font-semibold border-red-200 text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" /> Excluir livro
-                </Button>
+                {isAdmin && (
+                  <Button
+                    onClick={() => setDeleteOpen(true)}
+                    variant="outline"
+                    className="flex-1 h-11 text-sm font-semibold border-red-200 text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" /> Excluir livro
+                  </Button>
+                )}
               </div>
 
               <div className="space-y-3">

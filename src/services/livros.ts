@@ -19,7 +19,7 @@ export interface Livro {
 }
 
 export interface LivroFormData {
-  numero_cadastro: string
+  numero_cadastro?: string
   titulo: string
   autor: string
   editora: string
@@ -51,12 +51,43 @@ export const getLivros = async (): Promise<Livro[]> => {
   return await pb.collection('livros').getFullList<Livro>({ sort: 'titulo' })
 }
 
+export const getNextNumeroCadastro = async (): Promise<string> => {
+  try {
+    const list = await pb.collection('livros').getFullList<Livro>()
+    let maxNum = 0
+    let maxLen = 0
+    for (const item of list) {
+      const trimmed = (item.numero_cadastro || '').trim()
+      if (/^\d+$/.test(trimmed)) {
+        const n = parseInt(trimmed, 10)
+        if (n > maxNum) {
+          maxNum = n
+          maxLen = trimmed.length
+        }
+      }
+    }
+    const nextVal = maxNum + 1
+    return maxLen > 1 ? String(nextVal).padStart(maxLen, '0') : String(nextVal)
+  } catch (e) {
+    console.error('Erro ao calcular próximo número de cadastro:', e)
+    return ''
+  }
+}
+
 export const getLivro = async (id: string): Promise<Livro> => {
   return await pb.collection('livros').getOne<Livro>(id)
 }
 
 export const createLivro = async (data: LivroFormData): Promise<Livro> => {
-  return await pb.collection('livros').create<Livro>({ status: 'disponível', ...data })
+  let numero = data.numero_cadastro?.trim()
+  if (!numero) {
+    numero = await getNextNumeroCadastro()
+  }
+  return await pb.collection('livros').create<Livro>({
+    status: 'disponível',
+    ...data,
+    numero_cadastro: numero,
+  })
 }
 
 export const getLivroByCadastro = async (numeroCadastro: string): Promise<Livro> => {

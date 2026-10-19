@@ -8,6 +8,10 @@ import {
   AlertCircle,
   RefreshCw,
   Clock,
+  Search,
+  X,
+  ArrowLeft,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,10 +30,13 @@ import {
   getActiveEmprestimoByLivroCadastro,
   devolverEmprestimo,
   renovarEmprestimo,
+  getEmprestimosByLeitor,
   type EmprestimoWithLeitor,
 } from '@/services/emprestimos'
+import { searchLeitores, type Leitor } from '@/services/leitores'
 import { getConfiguracoes, type Configuracoes } from '@/services/configuracoes'
 import { formatDate, formatDateTime, normalizeToDate } from '@/lib/loan-utils'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 function getLoanSituation(dataPrevista: string): { label: string; isLate: boolean } {
@@ -42,7 +49,14 @@ function getLoanSituation(dataPrevista: string): { label: string; isLate: boolea
 }
 
 export default function Devolucao() {
+  const [searchMode, setSearchMode] = useState<'livro' | 'leitor'>('livro')
   const [bookSearch, setBookSearch] = useState('')
+  const [leitorSearch, setLeitorSearch] = useState('')
+  const [leitorResults, setLeitorResults] = useState<Leitor[]>([])
+  const [selectedLeitor, setSelectedLeitor] = useState<Leitor | null>(null)
+  const [leitorLoans, setLeitorLoans] = useState<EmprestimoWithLeitor[]>([])
+  const [loadingLoans, setLoadingLoans] = useState(false)
+
   const [emprestimo, setEmprestimo] = useState<EmprestimoWithLeitor | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -63,6 +77,23 @@ export default function Devolucao() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    const q = leitorSearch.trim()
+    if (!q || selectedLeitor) {
+      setLeitorResults([])
+      return
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const results = await searchLeitores(q)
+        setLeitorResults(results)
+      } catch {
+        setLeitorResults([])
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [leitorSearch, selectedLeitor])
+
   useRealtime('emprestimos', (e) => {
     if (!emprestimo) return
     if (e.record.id === emprestimo.id) {
@@ -75,9 +106,64 @@ export default function Devolucao() {
       } else if (e.action === 'delete') {
         setEmprestimo(null)
         setBookSearch('')
+        if (selectedLeitor) {
+          loadLeitorLoans(selectedLeitor)
+        }
       }
     }
   })
+
+  const loadLeitorLoans = async (leitor: Leitor) => {
+    setLoadingLoans(true)
+    setError(null)
+    try {
+      const loans = await getEmprestimosByLeitor(leitor.id)
+      const active = loans
+        .filter((e) => e.status === 'ativo' || e.status === 'atrasado')
+        .map((e) => ({
+          ...e,
+          expand: {
+            ...e.expand,
+            leitor: {
+              id: leitor.id,
+              nome_completo: leitor.nome_completo,
+              numero_cadastro: leitor.numero_cadastro,
+            },
+          },
+        })) as EmprestimoWithLeitor[]
+      setLeitorLoans(active)
+      if (active.length === 0) {
+        setError(`O leitor ${leitor.nome_completo} não possui empréstimos ativos no momento.`)
+        setEmprestimo(null)
+      } else if (active.length === 1) {
+        setEmprestimo(active[0])
+        setTimeout(() => confirmRef.current?.focus(), 50)
+      } else {
+        setEmprestimo(null)
+      }
+    } catch {
+      setError('Erro ao carregar empréstimos deste leitor.')
+    } finally {
+      setLoadingLoans(false)
+    }
+  }
+
+  const handleSelectLeitor = (l: Leitor) => {
+    setSelectedLeitor(l)
+    setLeitorSearch(l.nome_completo)
+    setLeitorResults([])
+    setSuccess(null)
+    loadLeitorLoans(l)
+  }
+
+  const handleClearLeitor = () => {
+    setSelectedLeitor(null)
+    setLeitorSearch('')
+    setLeitorResults([])
+    setLeitorLoans([])
+    setEmprestimo(null)
+    setError(null)
+  }
 
   const handleBookLookup = async () => {
     const num = bookSearch.trim()
@@ -123,6 +209,9 @@ export default function Devolucao() {
         data_prevista_devolucao: updated.data_prevista_devolucao,
         quantidade_renovacoes: updated.quantidade_renovacoes,
       })
+      if (selectedLeitor) {
+        await loadLeitorLoans(selectedLeitor)
+      }
       setRenewOpen(false)
       toast.success('Empréstimo renovado com sucesso!', {
         description: `A ENTREGA SERÁ DIA ${formatDate(newReturnDate)}`,
@@ -144,12 +233,16 @@ export default function Devolucao() {
     setSubmitting(true)
     try {
       await devolverEmprestimo(emprestimo.id, selectedVoluntario)
-      setSuccess('Devolução realizada com sucesso.')
+      setSuccess(`Livro "${emprestimo.expand?.livro?.titulo || ''}" devolvido com sucesso!`)
       setBookSearch('')
       setEmprestimo(null)
       setError(null)
       setSelectedVoluntario('')
-      setTimeout(() => inputRef.current?.focus(), 100)
+      if (selectedLeitor) {
+        await loadLeitorLoans(selectedLeitor)
+      } else {
+        setTimeout(() => inputRef.current?.focus(), 100)
+      }
     } catch (error) {
       console.error('Devolucao error:', error)
       toast.error('Não foi possível concluir a operação. Verifique os dados e tente novamente.')
@@ -185,29 +278,219 @@ export default function Devolucao() {
       )}
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
-        <div className="space-y-2">
-          <label className="text-lg font-bold text-gray-800">Número do livro</label>
-          <Input
-            ref={inputRef}
-            value={bookSearch}
-            onChange={(e) => onBookChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                handleBookLookup()
-              }
+        {/* Mode Selector Tabs */}
+        <div className="flex border-b border-gray-200 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setSearchMode('livro')
+              setEmprestimo(null)
+              setError(null)
             }}
-            placeholder="Digite o número e pressione ENTER..."
-            className="h-12 text-base font-medium border-gray-200"
-            autoFocus
-          />
-          {error && (
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertCircle className="w-5 h-5" />
-              <span className="font-semibold">{error}</span>
-            </div>
-          )}
+            className={cn(
+              'pb-3 px-4 text-base font-semibold border-b-2 transition-colors flex items-center gap-2',
+              searchMode === 'livro'
+                ? 'border-[#1F5C8B] text-[#1F5C8B]'
+                : 'border-transparent text-gray-500 hover:text-gray-700',
+            )}
+          >
+            <BookOpen className="w-4 h-4" />
+            Buscar por Nº do Livro
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchMode('leitor')
+              setEmprestimo(null)
+              setError(null)
+            }}
+            className={cn(
+              'pb-3 px-4 text-base font-semibold border-b-2 transition-colors flex items-center gap-2',
+              searchMode === 'leitor'
+                ? 'border-[#1F5C8B] text-[#1F5C8B]'
+                : 'border-transparent text-gray-500 hover:text-gray-700',
+            )}
+          >
+            <User className="w-4 h-4" />
+            Buscar por Nome do Leitor
+          </button>
         </div>
+
+        {/* Mode 1: Search by Book Number */}
+        {searchMode === 'livro' && (
+          <div className="space-y-2">
+            <label className="text-base font-bold text-gray-800">
+              Número de cadastro do livro
+            </label>
+            <div className="flex gap-2">
+              <Input
+                ref={inputRef}
+                value={bookSearch}
+                onChange={(e) => onBookChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleBookLookup()
+                  }
+                }}
+                placeholder="Digite o número do livro e pressione ENTER..."
+                className="h-12 text-base font-medium border-gray-200 flex-1"
+                autoFocus
+              />
+              <Button
+                type="button"
+                onClick={handleBookLookup}
+                className="h-12 px-6 bg-[#1F5C8B] hover:bg-[#174A73] text-white font-semibold"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Buscar
+              </Button>
+            </div>
+            {error && (
+              <div className="flex items-center gap-2 text-red-600 mt-2">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <span className="font-semibold text-sm">{error}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Mode 2: Search by Reader Name */}
+        {searchMode === 'leitor' && (
+          <div className="space-y-3">
+            <label className="text-base font-bold text-gray-800">
+              Nome ou cadastro do leitor
+            </label>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                value={leitorSearch}
+                onChange={(e) => {
+                  setLeitorSearch(e.target.value)
+                  if (selectedLeitor) {
+                    setSelectedLeitor(null)
+                    setLeitorLoans([])
+                    setEmprestimo(null)
+                    setError(null)
+                  }
+                }}
+                placeholder="Digite o nome ou número de cadastro do leitor..."
+                className="h-12 pl-12 pr-20 text-base font-medium border-gray-200"
+                autoFocus
+              />
+              {selectedLeitor && (
+                <button
+                  type="button"
+                  onClick={handleClearLeitor}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1.5 rounded transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Trocar
+                </button>
+              )}
+            </div>
+
+            {/* Results dropdown/list when searching */}
+            {!selectedLeitor && leitorResults.length > 0 && (
+              <div className="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-64 overflow-y-auto bg-white shadow-md">
+                {leitorResults.map((l) => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => handleSelectLeitor(l)}
+                    className="w-full text-left p-3 hover:bg-blue-50/60 flex items-center justify-between transition-colors"
+                  >
+                    <div>
+                      <p className="font-bold text-gray-900">{l.nome_completo}</p>
+                      <p className="text-xs text-gray-500">
+                        Cadastro: {l.numero_cadastro} {l.telefone ? `• Tel: ${l.telefone}` : ''}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-xs text-[#1F5C8B] border-[#1F5C8B]/40">
+                      Selecionar
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {loadingLoans && (
+              <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                <Loader2 className="w-4 h-4 animate-spin text-[#1F5C8B]" />
+                Buscando livros com este leitor...
+              </div>
+            )}
+
+            {error && (
+              <div className="flex items-center gap-2 text-red-600 mt-2">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <span className="font-semibold text-sm">{error}</span>
+              </div>
+            )}
+
+            {/* Multiple loans selector if reader has > 1 active loan and none is selected */}
+            {selectedLeitor && !emprestimo && leitorLoans.length > 1 && (
+              <div className="mt-4 space-y-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <p className="text-sm font-semibold text-gray-700">
+                  O leitor <strong className="text-gray-900">{selectedLeitor.nome_completo}</strong> possui <strong className="text-[#1F5C8B]">{leitorLoans.length} livros</strong> emprestados. Selecione qual deseja devolver:
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {leitorLoans.map((loan) => (
+                    <div
+                      key={loan.id}
+                      className="border border-gray-200 rounded-lg p-3.5 bg-white flex flex-col justify-between gap-3 shadow-sm hover:border-[#1F5C8B]/50 transition-colors"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <Badge
+                            className={
+                              loan.tipo_emprestimo === 'estudo'
+                                ? 'bg-purple-100 text-purple-800 hover:bg-purple-100'
+                                : 'bg-blue-100 text-blue-800 hover:bg-blue-100'
+                            }
+                          >
+                            {loan.tipo_emprestimo === 'estudo' ? 'Estudo' : 'Comum'}
+                          </Badge>
+                          <span className="text-xs font-semibold text-gray-500">
+                            Livro Nº {loan.expand?.livro?.numero_cadastro || '—'}
+                          </span>
+                        </div>
+                        <p className="font-bold text-gray-900 line-clamp-2">
+                          {loan.expand?.livro?.titulo || 'Livro não identificado'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Devolução prevista: <strong>{formatDate(loan.data_prevista_devolucao)}</strong>
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setEmprestimo(loan)}
+                        className="bg-[#1F5C8B] hover:bg-[#174A73] text-white w-full font-semibold"
+                      >
+                        Devolver este livro
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Back button if multiple loans were available and one is currently active */}
+            {selectedLeitor && emprestimo && leitorLoans.length > 1 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setEmprestimo(null)}
+                className="text-xs font-semibold text-gray-600 hover:bg-gray-100 mb-2"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+                Voltar à lista de livros de {selectedLeitor.nome_completo}
+              </Button>
+            )}
+          </div>
+        )}
 
         {emprestimo && (
           <div className="space-y-4 animate-fade-in">

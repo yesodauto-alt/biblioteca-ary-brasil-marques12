@@ -11,6 +11,8 @@ import {
   fetchLivrosDisponiveis,
   fetchLivrosMaisEmprestados,
   fetchUsuariosMaisUtilizam,
+  fetchTodoAcervo,
+  fetchTodosLeitores,
 } from '@/services/relatorios'
 
 export type ReportType =
@@ -20,8 +22,10 @@ export type ReportType =
   | 'emprestimos-ativos'
   | 'emprestimos-atrasados'
   | 'livros-disponiveis'
+  | 'todo-acervo'
   | 'livros-mais-emprestados'
   | 'usuarios-mais-utilizam'
+  | 'todos-leitores'
 
 export interface ClickHandlers {
   onLeitorClick: (id: string) => void
@@ -301,6 +305,70 @@ export function getReportDefs(h: ClickHandlers): Record<ReportType, ReportDef> {
       csvHeaders: ['Nome', 'Nº Cadastro', 'Telefone', 'Quantidade de Empréstimos'],
       csvRow: (r) => [r.nome, r.numeroCadastro, r.telefone, r.quantidade],
       fetchData: (p) => fetchUsuariosMaisUtilizam(p),
+    },
+    'todo-acervo': {
+      label: 'Todo o acervo',
+      usesPeriod: false,
+      columns: [
+        col('Nº Cadastro', 'numeroCadastro'),
+        clickCol('Título', 'titulo', h.onLivroClick, 'id'),
+        col('Autor', 'autor'),
+        col('Editora', 'editora'),
+        col('Categoria', 'categoria'),
+        col('CDD', 'cdd'),
+        col('Cutter', 'cutter'),
+        statusCol,
+      ],
+      csvHeaders: [
+        'Nº Cadastro',
+        'Título',
+        'Autor',
+        'Editora',
+        'Categoria',
+        'CDD',
+        'Cutter',
+        'Status',
+      ],
+      csvRow: (r) => [
+        r.numeroCadastro,
+        r.titulo,
+        r.autor,
+        r.editora,
+        r.categoria,
+        r.cdd,
+        r.cutter,
+        r.status,
+      ],
+      fetchData: (p) => fetchTodoAcervo(p),
+    },
+    'todos-leitores': {
+      label: 'Todos os leitores',
+      usesPeriod: false,
+      columns: [
+        col('Nº Cadastro', 'numeroCadastro'),
+        clickCol('Nome Completo', 'nome', h.onLeitorClick, 'id'),
+        col('Telefone', 'telefone'),
+        col('E-mail', 'email'),
+        dateCol('Data Cadastro', 'dataCadastro'),
+        statusCol,
+      ],
+      csvHeaders: [
+        'Nº Cadastro',
+        'Nome Completo',
+        'Telefone',
+        'E-mail',
+        'Data de Cadastro',
+        'Status',
+      ],
+      csvRow: (r) => [
+        r.numeroCadastro,
+        r.nome,
+        r.telefone,
+        r.email,
+        r.dataCadastro,
+        r.status,
+      ],
+      fetchData: (p) => fetchTodosLeitores(p),
     },
   }
 }

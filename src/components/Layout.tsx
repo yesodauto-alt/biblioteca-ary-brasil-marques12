@@ -80,7 +80,19 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
       <div className="p-4 border-t border-gray-100 shrink-0">
-        <p className="text-sm font-semibold text-gray-800 truncate">{user?.name || 'Voluntário'}</p>
+        <div className="flex items-center justify-between gap-1 mb-1">
+          <p className="text-sm font-semibold text-gray-800 truncate">{user?.name || 'Usuário'}</p>
+          <span
+            className={cn(
+              'text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full',
+              user?.role === 'administrador'
+                ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                : 'bg-blue-100 text-blue-800 border border-blue-200',
+            )}
+          >
+            {user?.role === 'administrador' ? 'Administrador' : 'Voluntário'}
+          </span>
+        </div>
         <p className="text-xs text-gray-400 truncate mb-2">{user?.email}</p>
         <Button
           variant="ghost"
